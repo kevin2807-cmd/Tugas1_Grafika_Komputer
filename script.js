@@ -202,6 +202,8 @@ function render() {
 
 
     // 3. Gambar CCTV di atas kotak mesin
+
+
     let cctvHolderMatrix = mult(baseViewMatrix, translate(-1, 0.2 , 0.4));
     drawObject(cctvHolder, blackColor, cctvHolderMatrix);
 
@@ -221,13 +223,19 @@ function render() {
     const detailDepth = -0.51; 
 
     // Tombol Bulat Hitam di atas
+    let lamp;
+    if(targetGateAngle === 0.0){
+        lamp = redColor;
+    } else {
+        lamp = greenColor;
+    }
     let buttonMatrix = mult(baseMatrix, translate(0.25, 1, detailDepth)); 
     buttonMatrix = mult(buttonMatrix, rotate(90, [1, 0, 0])); 
-    drawObject(button, greenColor, buttonMatrix);
+    drawObject(button, lamp, buttonMatrix);
 
     let buttonMatrix2 = mult(baseMatrix, translate(-0.25, 1, detailDepth)); 
     buttonMatrix2 = mult(buttonMatrix2, rotate(90, [1, 0, 0])); 
-    drawObject(button, redColor, buttonMatrix2);
+    drawObject(button, lamp, buttonMatrix2);
 
     // Garis/Lekukan Persegi Panjang
     const lineCenterY = -0.3; 
