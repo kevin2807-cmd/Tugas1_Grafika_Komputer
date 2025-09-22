@@ -16,6 +16,9 @@ let dragging = false;
 let lastX = -1, lastY = -1;
 let currentRotation = [20, -30];
 let zoomFactor = 15.0;
+let cctvMoveDirection = { x: 0, y: 0 };
+let cctvRotation = [0, 0];
+let isAutomaticCCTVMovement = false;
 
 // Variabel untuk animasi palang (arm)
 let targetGateAngle = 0.0;
@@ -107,6 +110,7 @@ function main() {
 
     program = initShaders(gl, "vertex-shader", "fragment-shader");
     gl.useProgram(program);
+    const autoButton = document.getElementById("auto-mode-button");
     
     // === Inisialisasi Geometri Barrier Gate dan Detailnya ===
     baseUnit = createCuboid(1.5, 3.0, 1.0); 
@@ -119,8 +123,8 @@ function main() {
     lineHorizontal = createCuboid(1.0, 0.05, 0.05);
     foundation = createCuboid(1.8, 0.5, 1.2);
     cctvHolder = createCuboid(0.2, 4.5, 0.2);
-    cctv = createCuboid(0.75, 0.75, 1.5);
-    cctvLens = createCuboid(0.4, 0.4, 0.05);
+    cctv = createCuboid(0.80, 0.80, 1.55);
+    cctvLens = createCuboid(0.45, 0.45, 0.05);
     cctvRadar = createCylinder(0.07, 0.05, 18);
 
     program.a_Position = gl.getAttribLocation(program, "a_Position");
@@ -148,6 +152,24 @@ function drawObject(obj, color, transformationMatrix) {
 
 function render() {
     currentGateAngle += (targetGateAngle - currentGateAngle) * 0.05;
+
+
+    if (isAutomaticCCTVMovement) {
+        const swingSpeed = 0.5;
+        const maxAngle = 45;
+        cctvRotation[1] = Math.sin(Date.now() / 1000 * swingSpeed) * maxAngle;
+    }
+    else{
+        const cctvMoveSpeed = 0.5;
+        cctvRotation[0] += cctvMoveDirection.y * cctvMoveSpeed; 
+        cctvRotation[1] += cctvMoveDirection.x * cctvMoveSpeed; 
+
+    // Batasi rotasi vertikal (tilt) antara -45 dan 45 derajat
+        cctvRotation[0] = Math.max(-45, Math.min(45, cctvRotation[0]));
+    // Batasi rotasi horizontal (pan) antara -45 dan 45 derajat
+        cctvRotation[1] = Math.max(-45, Math.min(45, cctvRotation[1]));
+    }
+
 
     gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
 
@@ -180,12 +202,12 @@ function render() {
 
 
     // 3. Gambar CCTV di atas kotak mesin
-    let cctvHolderMatrix = mult(baseViewMatrix, translate(-1, 0.2 , 0.5));
+    let cctvHolderMatrix = mult(baseViewMatrix, translate(-1, 0.2 , 0.4));
     drawObject(cctvHolder, blackColor, cctvHolderMatrix);
 
-    let cctvMatrix = mult(cctvHolderMatrix, translate(0, 2.25, -0.5));
-    cctvMatrix = mult(cctvMatrix, rotate(20, [1, 0, 0]));
-    cctvMatrix = mult(cctvMatrix, rotate(20, [0, 1, 0]));
+    let cctvMatrix = mult(cctvHolderMatrix, translate(0, 2.25, 0));
+    cctvMatrix = mult(cctvMatrix, rotate(cctvRotation[1], [0, 1, 0])); 
+    cctvMatrix = mult(cctvMatrix, rotate(cctvRotation[0], [1, 0, 0])); 
     drawObject(cctv, whiteColor1, cctvMatrix);
 
     let cctvLensMatrix = mult(cctvMatrix, translate(0, 0, -0.76));
@@ -199,12 +221,12 @@ function render() {
     const detailDepth = -0.51; 
 
     // Tombol Bulat Hitam di atas
-    let buttonMatrix = mult(baseMatrix, translate(0.25, 1, detailDepth)); // Z positif agar di depan
-    buttonMatrix = mult(buttonMatrix, rotate(90, [1, 0, 0])); // Rotasi agar datar
+    let buttonMatrix = mult(baseMatrix, translate(0.25, 1, detailDepth)); 
+    buttonMatrix = mult(buttonMatrix, rotate(90, [1, 0, 0])); 
     drawObject(button, greenColor, buttonMatrix);
 
-    let buttonMatrix2 = mult(baseMatrix, translate(-0.25, 1, detailDepth)); // Z positif agar di depan
-    buttonMatrix2 = mult(buttonMatrix2, rotate(90, [1, 0, 0])); // Rotasi agar datar
+    let buttonMatrix2 = mult(baseMatrix, translate(-0.25, 1, detailDepth)); 
+    buttonMatrix2 = mult(buttonMatrix2, rotate(90, [1, 0, 0])); 
     drawObject(button, redColor, buttonMatrix2);
 
     // Garis/Lekukan Persegi Panjang
@@ -231,7 +253,7 @@ function render() {
     const numStrips = 7;
     
     // Posisi engsel disesuaikan dengan tinggi kotak mesin yang baru
-    let armBaseMatrix = translate(0, 1, 0); // Y = dekat puncak baseUnit
+    let armBaseMatrix = translate(0, 1, 0);
     armBaseMatrix = mult(armBaseMatrix, rotate(currentGateAngle, [0, 0, 1]));
 
     for (let i = 0; i < numStrips; i++) {
@@ -246,19 +268,13 @@ function render() {
 }
 
 function setupEventListeners() {
-    // Variabel untuk melacak apakah mouse digeser (drag)
     let hasDragged = false;
-
-    // Saat tombol mouse DITEKAN
     canvas.addEventListener("mousedown", (e) => {
         dragging = true;
         lastX = e.clientX;
         lastY = e.clientY;
-        //Setiap kali mouse ditekan, reset flag drag
         hasDragged = false; 
     });
-
-    // Saat mouse DILEPAS
     canvas.addEventListener("mouseup", () => {
         dragging = false;
         if (!hasDragged) {
@@ -269,13 +285,9 @@ function setupEventListeners() {
             }
         }
     });
-
-    // Saat mouse BERGERAK
     canvas.addEventListener("mousemove", (e) => {
         if (dragging) {
-            // TAMBAHKAN: Jika mouse bergerak saat ditahan, tandai sebagai drag
             hasDragged = true;
-
             const deltaX = e.clientX - lastX;
             const deltaY = e.clientY - lastY;
             currentRotation[1] += deltaX;
@@ -284,12 +296,48 @@ function setupEventListeners() {
             lastY = e.clientY;
         }
     });
-
-    // Event untuk zoom kamera 
     canvas.addEventListener("wheel", (e) => {
         e.preventDefault();
         zoomFactor += e.deltaY * -0.02;
         zoomFactor = Math.min(Math.max(8, zoomFactor), 40);
     });
+
+        const autoButton = document.getElementById("auto-mode-button");
     
+
+    autoButton.addEventListener("click", () => {
+        isAutomaticCCTVMovement = !isAutomaticCCTVMovement;
+
+
+        if (isAutomaticCCTVMovement) {
+            autoButton.textContent = "Mode: Otomatis (Tekan untuk Manual)";
+        } else {
+            autoButton.textContent = "Mode: Manual (Tekan untuk Otomatis)";
+            cctvRotation = [0, 0];
+        }
+    });
+
+    window.addEventListener("keydown", (e) => {
+        e.preventDefault(); 
+        switch(e.key) {
+            case "ArrowUp":   cctvMoveDirection.y = -1; break; 
+            case "ArrowDown": cctvMoveDirection.y = 1; break;
+            case "ArrowLeft": cctvMoveDirection.x = 1; break;
+            case "ArrowRight":cctvMoveDirection.x = -1; break;  
+        }
+    });
+
+    window.addEventListener("keyup", (e) => {
+        e.preventDefault();
+        switch(e.key) {
+            case "ArrowUp":
+            case "ArrowDown":
+                cctvMoveDirection.y = 0; 
+                break;
+            case "ArrowLeft":
+            case "ArrowRight":
+                cctvMoveDirection.x = 0; 
+                break;
+        }
+    });
 }
