@@ -20,11 +20,11 @@ let cctvMoveDirection = { x: 0, y: 0 };
 let cctvRotation = [0, 0];
 let isAutomaticCCTVMovement = false;
 
-// Variabel untuk animasi palang (arm)
+// Variabel untuk animasi palang
 let targetGateAngle = 0.0;
 let currentGateAngle = 0.0;
 
-// Fungsi helper untuk membuat balok (cuboid)
+// Fungsi helper untuk membuat balok
 function createCuboid(width, height, depth) {
     const w = width / 2;
     const h = height / 2;
@@ -58,7 +58,7 @@ function createCuboid(width, height, depth) {
     };
 }
 
-// Fungsi helper untuk membuat silinder (tidak ada perubahan)
+// Fungsi helper untuk membuat silinder
 function createCylinder(radius, height, segments) {
     const cylinderVertices = [];
     const cylinderIndices = [];
@@ -115,8 +115,6 @@ function main() {
     // === Inisialisasi Geometri Barrier Gate dan Detailnya ===
     baseUnit = createCuboid(1.5, 3.0, 1.0); 
     strip = createCuboid(1.0, 0.3, 0.3);
-
-    // Detail baru
     button = createCylinder(0.150, 0.05, 18);
     keyhole = createCuboid(0.1, 0.2, 0.1);
     lineVertical = createCuboid(0.05, 1.5, 0.05);
@@ -164,10 +162,8 @@ function render() {
         cctvRotation[0] += cctvMoveDirection.y * cctvMoveSpeed; 
         cctvRotation[1] += cctvMoveDirection.x * cctvMoveSpeed; 
 
-    // Batasi rotasi vertikal (tilt) antara -45 dan 45 derajat
         cctvRotation[0] = Math.max(-45, Math.min(45, cctvRotation[0]));
-    // Batasi rotasi horizontal (pan) antara -45 dan 45 derajat
-        cctvRotation[1] = Math.max(-45, Math.min(45, cctvRotation[1]));
+        cctvRotation[1] = Math.max(-90, Math.min(90, cctvRotation[1]));
     }
 
 
@@ -180,7 +176,6 @@ function render() {
     // Gambar Lantai/Tanah
     const ground = createCuboid(20, 0.1, 20);
     const groundColor = vec4(0.4, 0.6, 0.4, 1.0);
-    // Posisi tanah disesuaikan agar pas di bawah pondasi
     let groundMatrix = mult(baseViewMatrix, translate(0, -2.05, 0)); 
     drawObject(ground, groundColor, groundMatrix);
 
@@ -201,9 +196,7 @@ function render() {
     drawObject(baseUnit, orangeColor, baseMatrix);
 
 
-    // 3. Gambar CCTV di atas kotak mesin
-
-
+    // 3. Gambar CCTV
     let cctvHolderMatrix = mult(baseViewMatrix, translate(-1, 0.2 , 0.4));
     drawObject(cctvHolder, blackColor, cctvHolderMatrix);
 
@@ -221,8 +214,6 @@ function render() {
 
     // 4. Gambar Kotak Detail di depan kotak mesin
     const detailDepth = -0.51; 
-
-    // Tombol Bulat Hitam di atas
     let lamp;
     if(targetGateAngle === 0.0){
         lamp = redColor;
@@ -237,22 +228,17 @@ function render() {
     buttonMatrix2 = mult(buttonMatrix2, rotate(90, [1, 0, 0])); 
     drawObject(button, lamp, buttonMatrix2);
 
-    // Garis/Lekukan Persegi Panjang
     const lineCenterY = -0.3; 
-    
-    // Garis Vertikal Kiri & Kanan
     let vLineLeftMatrix = mult(baseMatrix, translate(-0.5, lineCenterY, detailDepth));
     drawObject(lineVertical, blackColor, vLineLeftMatrix);
     let vLineRightMatrix = mult(baseMatrix, translate(0.5, lineCenterY, detailDepth));
     drawObject(lineVertical, blackColor, vLineRightMatrix);
 
-    // Garis Horizontal Atas & Bawah
     let hLineTopMatrix = mult(baseMatrix, translate(0, lineCenterY + 0.75, detailDepth));
     drawObject(lineHorizontal, blackColor, hLineTopMatrix);
     let hLineBottomMatrix = mult(baseMatrix, translate(0, lineCenterY - 0.75, detailDepth));
     drawObject(lineHorizontal, blackColor, hLineBottomMatrix);
 
-    // Lubang Kunci (Keyhole)
     let keyholeMatrix = mult(baseMatrix, translate(0.3, -0.2, detailDepth));
     drawObject(keyhole, blackColor, keyholeMatrix);
 
@@ -260,7 +246,6 @@ function render() {
     const whiteColor = vec4(1.0, 1.0, 1.0, 1.0);
     const numStrips = 7;
     
-    // Posisi engsel disesuaikan dengan tinggi kotak mesin yang baru
     let armBaseMatrix = translate(0, 1, 0);
     armBaseMatrix = mult(armBaseMatrix, rotate(currentGateAngle, [0, 0, 1]));
 
