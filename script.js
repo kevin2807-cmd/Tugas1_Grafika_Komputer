@@ -15,6 +15,8 @@ let modelViewMatrixLoc, projectionMatrixLoc;
 let dragging = false;
 let lastX = -1, lastY = -1;
 let currentRotation = [20, -30];
+let projectionType = 'perspective';
+let fieldOfView = 50; 
 let zoomFactor = 15.0;
 let cctvMoveDirection = { x: 0, y: 0 };
 let cctvRotation = [0, 0];
@@ -168,7 +170,16 @@ function render() {
 
 
     gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
-
+    if (projectionType === 'perspective') {
+        projectionMatrix = perspective(fieldOfView, canvas.width / canvas.height, 0.1, 100);
+    } else { // Orthographic
+        const aspect = canvas.width / canvas.height;
+        const orthoSize = zoomFactor / 1.5; 
+        projectionMatrix = ortho(-orthoSize * aspect, orthoSize * aspect, -orthoSize, orthoSize, -100, 100);
+    }
+    gl.uniformMatrix4fv(projectionMatrixLoc, false, flatten(projectionMatrix));
+    
+    // Matriks View (Kamera)
     let baseViewMatrix = lookAt(vec3(0, 2, zoomFactor), vec3(0, 0, 0), vec3(0, 1, 0));
     baseViewMatrix = mult(baseViewMatrix, rotate(currentRotation[0], [1, 0, 0]));
     baseViewMatrix = mult(baseViewMatrix, rotate(currentRotation[1], [0, 1, 0]));
@@ -205,15 +216,15 @@ function render() {
     cctvMatrix = mult(cctvMatrix, rotate(cctvRotation[0], [1, 0, 0])); 
     drawObject(cctv, whiteColor1, cctvMatrix);
 
-    let cctvLensMatrix = mult(cctvMatrix, translate(0, 0, -0.76));
+    let cctvLensMatrix = mult(cctvMatrix, translate(0, 0, 0.76));
     drawObject(cctvLens, blackColor, cctvLensMatrix);
-    let cctvRadarMatrix = mult(cctvMatrix, translate(0, 0, -0.77));
+    let cctvRadarMatrix = mult(cctvMatrix, translate(0, 0, 0.77));
     cctvRadarMatrix = mult(cctvRadarMatrix, rotate(90, [1, 0, 0]));
     drawObject(cctvRadar, redColor, cctvRadarMatrix);
 
 
     // 4. Gambar Kotak Detail di depan kotak mesin
-    const detailDepth = -0.51; 
+    const detailDepth = 0.51; 
     let lamp;
     if(targetGateAngle === 0.0){
         lamp = redColor;
@@ -313,8 +324,8 @@ function setupEventListeners() {
     window.addEventListener("keydown", (e) => {
         e.preventDefault(); 
         switch(e.key) {
-            case "ArrowUp":   cctvMoveDirection.y = -1; break; 
-            case "ArrowDown": cctvMoveDirection.y = 1; break;
+            case "ArrowUp":   cctvMoveDirection.y = 1; break; 
+            case "ArrowDown": cctvMoveDirection.y = -1; break;
             case "ArrowLeft": cctvMoveDirection.x = 1; break;
             case "ArrowRight":cctvMoveDirection.x = -1; break;  
         }
@@ -332,5 +343,35 @@ function setupEventListeners() {
                 cctvMoveDirection.x = 0; 
                 break;
         }
+    });
+
+    const projectionSelect = document.getElementById('projection-type');
+    const fovSlider = document.getElementById('fov-slider');
+    const fovValue = document.getElementById('fov-value');
+    const fovControl = document.getElementById('fov-control');
+    const zoomSlider = document.getElementById('zoom-slider');
+    const zoomValue = document.getElementById('zoom-value');
+
+    // Listener untuk dropdown Proyeksi
+    projectionSelect.addEventListener('change', (e) => {
+        projectionType = e.target.value;
+        // Sembunyikan/tampilkan slider FOV
+        if (projectionType === 'perspective') {
+            fovControl.style.display = 'flex';
+        } else {
+            fovControl.style.display = 'none';
+        }
+    });
+
+    // Listener untuk slider FOV
+    fovSlider.addEventListener('input', (e) => {
+        fieldOfView = parseFloat(e.target.value);
+        fovValue.textContent = fieldOfView + '°';
+    });
+
+    // Listener untuk slider Zoom
+    zoomSlider.addEventListener('input', (e) => {
+        zoomFactor = parseFloat(e.target.value);
+        zoomValue.textContent = zoomFactor.toFixed(1);
     });
 }

@@ -69,3 +69,41 @@ main {
     font-style: italic;
     font-size: 0.9em;
 }
+/* Di dalam file style.css */
+
+#control-panel {
+    max-width: 800px;
+    margin: 20px auto;
+    padding: 15px;
+    background-color: #fff;
+    border: 1px solid #ddd;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+    text-align: left;
+}
+
+#control-panel h3 {
+    margin-top: 0;
+    border-bottom: 1px solid #eee;
+    padding-bottom: 10px;
+}
+
+.control-row {
+    display: flex;
+    align-items: center;
+    margin-bottom: 10px;
+}
+
+.control-row label {
+    flex-basis: 150px; /* Lebar label yang konsisten */
+    font-weight: bold;
+}
+
+.control-row input[type="range"] {
+    flex-grow: 1;
+}
+
+.control-row span {
+    margin-left: 15px;
+    font-family: monospace;
+    min-width: 40px;
+}
