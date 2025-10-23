@@ -1,155 +1,197 @@
 <!DOCTYPE html>
 <html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Grafika Komputer - WebGL Model Barrier Gate</title>
     <!-- Menghapus style inline dan menambahkan referensi ke file CSS eksternal -->
-    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="style.css" />
 
     <!-- SHADER BARU DENGAN DUKUNGAN LIGHTING (WebGL 2.0 / GLSL 3.0) -->
     <script id="vertex-shader" type="x-shader/x-vertex">
-    #version 300 es
-    in vec4 a_Position;
-    in vec4 a_Normal;
+      #version 300 es
+      in vec4 a_Position;
+      in vec4 a_Normal;
+      in vec2 a_TexCoord; // TAMBAHAN: Input untuk texture coordinates (UV)
 
-    uniform mat4 u_modelViewMatrix;
-    uniform mat4 u_projectionMatrix;
-    uniform mat3 u_normalMatrix;
-    uniform vec4 u_lightPosition;
+      uniform mat4 u_modelViewMatrix;
+      uniform mat4 u_projectionMatrix;
+      uniform mat3 u_normalMatrix;
+      uniform vec4 u_lightPosition;
 
-    out vec3 v_N, v_L, v_E;
+      out vec3 v_N, v_L, v_E;
+      out vec2 v_TexCoord;
 
-    void main()
-    {
-        vec3 pos = (u_modelViewMatrix * a_Position).xyz;
-        v_N = normalize(u_normalMatrix * a_Normal.xyz);
-        if (u_lightPosition.w == 0.0) {
-            v_L = normalize(u_lightPosition.xyz);
-        } else {
-            v_L = normalize(u_lightPosition.xyz - pos);
-        }
-        v_E = -normalize(pos);
-        gl_Position = u_projectionMatrix * u_modelViewMatrix * a_Position;
-    }
+      void main()
+      {
+          vec3 pos = (u_modelViewMatrix * a_Position).xyz;
+          v_N = normalize(u_normalMatrix * a_Normal.xyz);
+          if (u_lightPosition.w == 0.0) {
+              v_L = normalize(u_lightPosition.xyz);
+          } else {
+              v_L = normalize(u_lightPosition.xyz - pos);
+          }
+          v_E = -normalize(pos);
+
+          v_TexCoord = a_TexCoord; // TAMBAHAN: Meneruskan data UV
+
+          gl_Position = u_projectionMatrix * u_modelViewMatrix * a_Position;
+      }
     </script>
 
     <script id="fragment-shader" type="x-shader/x-fragment">
-    #version 300 es
-    precision mediump float;
+      #version 300 es
+      precision mediump float;
 
-    in vec3 v_N, v_L, v_E;
+      in vec3 v_N, v_L, v_E;
+      in vec2 v_TexCoord;
 
-    uniform vec4 u_ambientProduct;
-    uniform vec4 u_diffuseProduct;
-    uniform vec4 u_specularProduct;
-    uniform float u_shininess;
+      uniform vec4 u_ambientProduct;
+      uniform vec4 u_diffuseProduct;
+      uniform vec4 u_specularProduct;
+      uniform float u_shininess;
+      uniform sampler2D u_textureSampler;
 
-    out vec4 fColor;
+      out vec4 fColor;
 
-    void main()
-    {
-        vec3 H = normalize(v_L + v_E);
-        vec4 ambient = u_ambientProduct;
-        float kd = max(dot(v_L, v_N), 0.0);
-        vec4 diffuse = kd * u_diffuseProduct;
-        float ks = pow(max(dot(v_N, H), 0.0), u_shininess);
-        vec4 specular = ks * u_specularProduct;
+      void main()
+      {
+          vec4 texColor = texture(u_textureSampler, v_TexCoord);
 
-        if (dot(v_L, v_N) < 0.0) {
-            specular = vec4(0.0, 0.0, 0.0, 1.0);
-        }
-        
-        fColor = ambient + diffuse + specular;
-        fColor.a = 1.0;
-    }
+          vec3 H = normalize(v_L + v_E);
+          vec4 ambient = u_ambientProduct;
+          float kd = max(dot(v_L, v_N), 0.0);
+
+          vec4  diffuse = kd * u_diffuseProduct * texColor;
+
+          float ks = pow(max(dot(v_N, H), 0.0), u_shininess);
+          vec4 specular = ks * u_specularProduct;
+
+          if (dot(v_L, v_N) < 0.0) {
+              specular = vec4(0.0, 0.0, 0.0, 1.0);
+          }
+
+          fColor = ambient + diffuse + specular;
+          fColor.a = 1.0;
+      }
     </script>
-
-</head>
-<body>
+  </head>
+  <body>
     <header>
-        <h1>Aplikasi Grafika: Model Barrier Gate 3D Interaktif</h1>
-        <p>Objek dari Lingkungan Teknik Informatika (Sistem Parkir)</p>
-        <p>Kevin Leonard Berutu (5025231089) || William Pranata (5025231088)</p>
+      <h1>Aplikasi Grafika: Model Barrier Gate 3D Interaktif</h1>
+      <p>Objek dari Lingkungan Teknik Informatika (Sistem Parkir)</p>
+      <p>Kevin Leonard Berutu (5025231089) || William Pranata (5025231088)</p>
     </header>
 
     <div id="canvas-container">
-        <canvas id="gl-canvas" width="800" height="500">
-            Browser Anda tidak mendukung HTML5 canvas.
-        </canvas>
+      <canvas id="gl-canvas" width="800" height="500">
+        Browser Anda tidak mendukung HTML5 canvas.
+      </canvas>
     </div>
     <div class="instructions">
-        <p>🖱️ **Interaksi:**</p>
-        <ul>
-            <li><b>Klik Kiri + Drag:</b> Untuk memutar (Rotasi) kamera.</li>
-            <li><b>Scroll Wheel:</b> Untuk memperbesar/memperkecil (Zoom) kamera.</li>
-            <li><b>Klik di Mana Saja:</b> Untuk membuka atau menutup palang portal.</li>
-            <li><b>Perubahan Warna Lampu:</b> Saat portal tutup lampu warna merah, saat portal terbuka lampu warna hijau.</li>
-            <li><b>Tombol Panah (Arrow Keys):</b> Untuk menggerakkan CCTV (atas/bawah/kiri/kanan).</li>
-            <li><b>Tombol otomatis pergerakkan CCTV: </b><button id="auto-mode-button" type="button">Mode: Manual (Tekan untuk Otomatis)</button></li>
-        </ul>
+      <p>🖱️ **Interaksi:**</p>
+      <ul>
+        <li><b>Klik Kiri + Drag:</b> Untuk memutar (Rotasi) kamera.</li>
+        <li>
+          <b>Scroll Wheel:</b> Untuk memperbesar/memperkecil (Zoom) kamera.
+        </li>
+        <li>
+          <b>Klik di Mana Saja:</b> Untuk membuka atau menutup palang portal.
+        </li>
+        <li>
+          <b>Perubahan Warna Lampu:</b> Saat portal tutup lampu warna merah,
+          saat portal terbuka lampu warna hijau.
+        </li>
+        <li>
+          <b>Tombol Panah (Arrow Keys):</b> Untuk menggerakkan CCTV
+          (atas/bawah/kiri/kanan).
+        </li>
+        <li>
+          <b>Tombol otomatis pergerakkan CCTV: </b
+          ><button id="auto-mode-button" type="button">
+            Mode: Manual (Tekan untuk Otomatis)
+          </button>
+        </li>
+      </ul>
     </div>
     <div id="control-panel">
-        <h3>Pengaturan Kamera</h3>
-        <div class="control-row">
-            <label for="projection-type">Tipe Proyeksi:</label>
-            <select id="projection-type">
-                <option value="perspective" selected>Perspective</option>
-                <option value="orthographic">Orthographic</option>
-            </select>
-        </div>
-        <div class="control-row" id="fov-control">
-            <label for="fov-slider">Field of View (FOV):</label>
-            <input type="range" id="fov-slider" min="30" max="120" value="50" step="1">
-            <span id="fov-value">50°</span>
-        </div>
-        <div class="control-row">
-            <label for="zoom-slider">Jarak Kamera (Zoom):</label>
-            <input type="range" id="zoom-slider" min="5" max="50" value="15" step="0.5">
-            <span id="zoom-value">15.0</span>
-        </div>
-
-
-        <h3>Pengaturan Cahaya</h3>
-        <div class="control-row">
-            <label for="light-x-slider">Posisi Cahaya X:</label>
-            <input type="range" id="light-x-slider" min="-50" max="50" value="10" step="1">
-            <span id="light-x-value">10</span>
-        </div>
-        <div class="control-row">
-            <label for="light-y-slider">Posisi Cahaya Y:</label>
-            <input type="range" id="light-y-slider" min="-50" max="50" value="20" step="1">
-            <span id="light-y-value">20</span>
-        </div>
-        <div class="control-row">
-            <label for="light-z-slider">Posisi Cahaya Z:</label>
-            <input type="range" id="light-z-slider" min="-50" max="50" value="15" step="1">
-            <span id="light-z-value">15</span>
-        </div>
-        <div class="control-row">
-            <label for="brightness-slider">Kecerahan Cahaya:</label>
-            <input type="range" id="brightness-slider" min="0.1" max="2.0" value="1.0" step="0.05">
-            <span id="brightness-value">1.0</span>
-        </div>
+      <h3>Pengaturan Cahaya</h3>
+      <div class="control-row">
+        <label for="light-x-slider">Posisi Cahaya X:</label>
+        <input
+          type="range"
+          id="light-x-slider"
+          min="-50"
+          max="50"
+          value="10"
+          step="1"
+        />
+        <span id="light-x-value">10</span>
+      </div>
+      <div class="control-row">
+        <label for="light-y-slider">Posisi Cahaya Y:</label>
+        <input
+          type="range"
+          id="light-y-slider"
+          min="-50"
+          max="50"
+          value="20"
+          step="1"
+        />
+        <span id="light-y-value">20</span>
+      </div>
+      <div class="control-row">
+        <label for="light-z-slider">Posisi Cahaya Z:</label>
+        <input
+          type="range"
+          id="light-z-slider"
+          min="-50"
+          max="50"
+          value="15"
+          step="1"
+        />
+        <span id="light-z-value">15</span>
+      </div>
+      <div class="control-row">
+        <label for="brightness-slider">Kecerahan Cahaya:</label>
+        <input
+          type="range"
+          id="brightness-slider"
+          min="0.1"
+          max="2.0"
+          value="1.0"
+          step="0.05"
+        />
+        <span id="brightness-value">1.0</span>
+      </div>
     </div>
-    
+
     <main>
-        <h2>Dokumentasi Objek Nyata</h2>
-        <p>Berikut adalah foto objek barrier gate yang dijadikan model.</p>
-        <div class="photo-gallery">
-            <figure>
-                <img src="/src/TampakDekat1.jpg" alt="Barrier gate di pintu masuk parkir">
-                <figcaption>Foto 1: Barrier gate di lingkungan nyata.</figcaption>
-            </figure>
-            <figure>
-                <img src="/src/TampakDekat2.jpg" alt="Detail kotak mesin barrier gate">
-                <figcaption>Foto 2: Detail kotak mesin (base unit).</figcaption>
-            </figure>
-            <figure>
-                <img src="/src/TampakJauh.jpg" alt="Detail kotak mesin barrier gate">
-                <figcaption>Foto 3: Detail kotak mesin (base unit).</figcaption>
-            </figure>
-        </div>
+      <h2>Dokumentasi Objek Nyata</h2>
+      <p>Berikut adalah foto objek barrier gate yang dijadikan model.</p>
+      <div class="photo-gallery">
+        <figure>
+          <img
+            src="/src/TampakDekat1.jpg"
+            alt="Barrier gate di pintu masuk parkir"
+          />
+          <figcaption>Foto 1: Barrier gate di lingkungan nyata.</figcaption>
+        </figure>
+        <figure>
+          <img
+            src="/src/TampakDekat2.jpg"
+            alt="Detail kotak mesin barrier gate"
+          />
+          <figcaption>Foto 2: Detail kotak mesin (base unit).</figcaption>
+        </figure>
+        <figure>
+          <img
+            src="/src/TampakJauh.jpg"
+            alt="Detail kotak mesin barrier gate"
+          />
+          <figcaption>Foto 3: Detail kotak mesin (base unit).</figcaption>
+        </figure>
+      </div>
     </main>
 
     <!-- Pustaka WebGL -->
@@ -157,6 +199,5 @@
     <script type="text/javascript" src="MVnew.js"></script>
     <!-- Logika Utama Aplikasi -->
     <script type="text/javascript" src="script.js"></script>
-</body>
+  </body>
 </html>
-
