@@ -4,15 +4,13 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Grafika Komputer - WebGL Model Barrier Gate</title>
-    <!-- Menghapus style inline dan menambahkan referensi ke file CSS eksternal -->
     <link rel="stylesheet" href="style.css" />
 
-    <!-- SHADER BARU DENGAN DUKUNGAN LIGHTING (WebGL 2.0 / GLSL 3.0) -->
     <script id="vertex-shader" type="x-shader/x-vertex">
       #version 300 es
       in vec4 a_Position;
       in vec4 a_Normal;
-      in vec2 a_TexCoord; // TAMBAHAN: Input untuk texture coordinates (UV)
+      in vec2 a_TexCoord;
 
       uniform mat4 u_modelViewMatrix;
       uniform mat4 u_projectionMatrix;
@@ -33,7 +31,7 @@
           }
           v_E = -normalize(pos);
 
-          v_TexCoord = a_TexCoord; // TAMBAHAN: Meneruskan data UV
+          v_TexCoord = a_TexCoord;
 
           gl_Position = u_projectionMatrix * u_modelViewMatrix * a_Position;
       }
@@ -83,93 +81,152 @@
       <p>Kevin Leonard Berutu (5025231089) || William Pranata (5025231088)</p>
     </header>
 
-    <div id="canvas-container">
-      <canvas id="gl-canvas" width="800" height="500">
-        Browser Anda tidak mendukung HTML5 canvas.
-      </canvas>
-    </div>
-    <div class="instructions">
-      <p>🖱️ **Interaksi:**</p>
-      <ul>
-        <li><b>Klik Kiri + Drag:</b> Untuk memutar (Rotasi) kamera.</li>
-        <li>
-          <b>Scroll Wheel:</b> Untuk memperbesar/memperkecil (Zoom) kamera.
-        </li>
-        <li>
-          <b>Klik di Mana Saja:</b> Untuk membuka atau menutup palang portal.
-        </li>
-        <li>
-          <b>Perubahan Warna Lampu:</b> Saat portal tutup lampu warna merah,
-          saat portal terbuka lampu warna hijau.
-        </li>
-        <li>
-          <b>Tombol Panah (Arrow Keys):</b> Untuk menggerakkan CCTV
-          (atas/bawah/kiri/kanan).
-        </li>
-        <li>
-          <b>Tombol otomatis pergerakkan CCTV: </b
-          ><button id="auto-mode-button" type="button">
-            Mode: Manual (Tekan untuk Otomatis)
-          </button>
-        </li>
-      </ul>
-    </div>
-    <div id="control-panel">
-      <h3>Pengaturan Cahaya</h3>
-      <div class="control-row">
-        <label for="light-x-slider">Posisi Cahaya X:</label>
-        <input
-          type="range"
-          id="light-x-slider"
-          min="-50"
-          max="50"
-          value="10"
-          step="1"
-        />
-        <span id="light-x-value">10</span>
+    <div id="main-content-wrapper">
+      <div id="canvas-column">
+        <div id="canvas-container">
+          <canvas id="gl-canvas" width="800" height="500">
+            Browser Anda tidak mendukung HTML5 canvas.
+          </canvas>
+        </div>
       </div>
-      <div class="control-row">
-        <label for="light-y-slider">Posisi Cahaya Y:</label>
-        <input
-          type="range"
-          id="light-y-slider"
-          min="-50"
-          max="50"
-          value="20"
-          step="1"
-        />
-        <span id="light-y-value">20</span>
-      </div>
-      <div class="control-row">
-        <label for="light-z-slider">Posisi Cahaya Z:</label>
-        <input
-          type="range"
-          id="light-z-slider"
-          min="-50"
-          max="50"
-          value="15"
-          step="1"
-        />
-        <span id="light-z-value">15</span>
-      </div>
-      <div class="control-row">
-        <label for="brightness-slider">Kecerahan Cahaya:</label>
-        <input
-          type="range"
-          id="brightness-slider"
-          min="0.1"
-          max="2.0"
-          value="1.0"
-          step="0.05"
-        />
-        <span id="brightness-value">1.0</span>
-      </div>
-    </div>
 
+      <div id="controls-column">
+        <div class="instructions">
+          <p>🖱️ **Interaksi:**</p>
+          <ul>
+            <li><b>Klik Kiri + Drag:</b> Untuk memutar (Rotasi) kamera.</li>
+            <li>
+              <b>Scroll Wheel:</b> Untuk memperbesar/memperkecil (Zoom) kamera.
+            </li>
+            <li>
+              <b>Klik di Mana Saja:</b> Untuk membuka atau menutup palang
+              portal.
+            </li>
+            <li>
+              <b>Perubahan Warna Lampu:</b> Saat portal tutup lampu warna merah,
+              saat portal terbuka lampu warna hijau.
+            </li>
+            <li>
+              <b>Tombol Panah (Arrow Keys):</b> Untuk menggerakkan CCTV
+              (atas/bawah/kiri/kanan).
+            </li>
+            <li>
+              <b>Tombol otomatis pergerakkan CCTV: </b
+              ><button id="auto-mode-button" type="button">
+                Mode: Manual (Tekan untuk Otomatis)
+              </button>
+            </li>
+          </ul>
+        </div>
+
+        <div id="control-panel">
+          <h3>Pengaturan Cahaya</h3>
+          <div class="control-row">
+            <label for="light-x-slider">Posisi Cahaya X:</label>
+            <input
+              type="range"
+              id="light-x-slider"
+              min="-50"
+              max="50"
+              value="10"
+              step="1"
+            />
+            <span id="light-x-value">10</span>
+          </div>
+          <div class="control-row">
+            <label for="light-y-slider">Posisi Cahaya Y:</label>
+            <input
+              type="range"
+              id="light-y-slider"
+              min="-50"
+              max="50"
+              value="20"
+              step="1"
+            />
+            <span id="light-y-value">20</span>
+          </div>
+          <div class="control-row">
+            <label for="light-z-slider">Posisi Cahaya Z:</label>
+            <input
+              type="range"
+              id="light-z-slider"
+              min="-50"
+              max="50"
+              value="15"
+              step="1"
+            />
+            <span id="light-z-value">15</span>
+          </div>
+          <div class="control-row">
+            <label for="brightness-slider">Kecerahan Cahaya:</label>
+            <input
+              type="range"
+              id="brightness-slider"
+              min="0.1"
+              max="2.0"
+              value="1.0"
+              step="0.05"
+            />
+            <span id="brightness-value">1.0</span>
+          </div>
+
+          <hr />
+          <h3>Pengaturan Rotasi Hierarki</h3>
+          <div class="control-row">
+            <label for="ground-rotate-slider">Rotasi Dunia (Ground):</label>
+            <input
+              type="range"
+              id="ground-rotate-slider"
+              min="-180"
+              max="180"
+              value="0"
+              step="1"
+            />
+            <span id="ground-rotate-value">0</span>°
+          </div>
+          <div class="control-row">
+            <label for="foundation-rotate-slider">Rotasi Pondasi:</label>
+            <input
+              type="range"
+              id="foundation-rotate-slider"
+              min="-45"
+              max="45"
+              value="0"
+              step="1"
+            />
+            <span id="foundation-rotate-value">0</span>°
+          </div>
+          <div class="control-row">
+            <label for="base-rotate-slider">Rotasi Base Unit:</label>
+            <input
+              type="range"
+              id="base-rotate-slider"
+              min="-45"
+              max="45"
+              value="0"
+              step="1"
+            />
+            <span id="base-rotate-value">0</span>°
+          </div>
+          <div class="control-row">
+            <label for="cctv-holder-rotate-slider">Rotasi Tiang CCTV:</label>
+            <input
+              type="range"
+              id="cctv-holder-rotate-slider"
+              min="-45"
+              max="45"
+              value="0"
+              step="1"
+            />
+            <span id="cctv-holder-rotate-value">0</span>°
+          </div>
+        </div>
+      </div>
+    </div>
     <main>
-      <h2>Dokumentasi Objek Nyata</h2>
-      <p>Berikut adalah foto objek barrier gate yang dijadikan model.</p>
-      <div class="photo-gallery">
+      <h2>Dokumentasi Objek dan Video Demonstrasi</h2>
+
+      <div class="media-gallery">
         <figure>
           <img
             src="/src/TampakDekat1.jpg"
@@ -177,6 +234,7 @@
           />
           <figcaption>Foto 1: Barrier gate di lingkungan nyata.</figcaption>
         </figure>
+
         <figure>
           <img
             src="/src/TampakDekat2.jpg"
@@ -184,6 +242,7 @@
           />
           <figcaption>Foto 2: Detail kotak mesin (base unit).</figcaption>
         </figure>
+
         <figure>
           <img
             src="/src/TampakJauh.jpg"
@@ -191,13 +250,69 @@
           />
           <figcaption>Foto 3: Detail kotak mesin (base unit).</figcaption>
         </figure>
+
+        <figure>
+          <video controls>
+            <source src="src/video.mp4" type="video/mp4" />
+            Browser Anda tidak mendukung tag video.
+          </video>
+          <figcaption>Video 1: Demonstrasi barrier gate beraksi.</figcaption>
+        </figure>
       </div>
+
+      <br></br>
+      <h2>Struktur tree dari objek</h2>
+      <div
+        class="tree-image-container"
+        style="text-align: center; padding: 20px"
+      >
+        <figure>
+          <img
+            src="src/DiagramTree.png"
+            alt="Struktur Pohon Hierarki"
+            style="
+              max-width: 600px;
+              height: auto;
+              border: 1px solid #ddd;
+              border-radius: 8px;
+              background: white;
+            "
+          />
+          <figcaption style="padding-top: 10px">
+            Gambar 1: Desain struktur pohon (tree) dari adegan.
+          </figcaption>
+        </figure>
+      </div>
+
+      <hr style="margin: 40px auto; border: 0; border-top: 1px solid #eee; max-width: 1440px;">
+
+    <h2>Pembagian Tugas Kelompok</h2>
+    <div class="task-division-container">
+      <ul>
+        <li>
+          <strong>Kevin Leonard Berutu (5025231089):</strong>
+          <ul>
+            <li>Pemodelan Objek 3d base unit dan palang</li>
+            <li>Implementasi Shader Lightning & Tekstur</li>
+            <li>Implementasi hear Pemodealn Objek 3d base unit, dan palang</li>
+            <li>Penearpaan Interaksi (slider, klik, keyboard)</li>
+          </ul>
+        </li>
+        <li>
+          <strong>William Pranata (5025231088):</strong>
+          <ul>
+            <li>Pemodelan Objek 3d CCTV dan pondasi</li>
+            <li>Implementasi Hieararchical pada objek 3d CCTV dan Pondasi</li>
+            <li>Penerapan pengaturan Rotasi hierarchical</li>
+            <li>Desain struktur Tree </li>
+          </ul>
+        </li>
+      </ul>
+    </div>
     </main>
 
-    <!-- Pustaka WebGL -->
     <script type="text/javascript" src="initShaders.js"></script>
     <script type="text/javascript" src="MVnew.js"></script>
-    <!-- Logika Utama Aplikasi -->
     <script type="text/javascript" src="script.js"></script>
   </body>
 </html>
